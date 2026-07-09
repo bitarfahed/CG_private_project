@@ -2,7 +2,7 @@
 
 ## Overview
 
-Interactive Graphics Lab is organized as a small Python package with clear boundaries between application orchestration, rendering, and graphics feature areas. The current application opens a GPU/OpenGL window and renders one procedurally generated mesh with a shader-based procedural material, Phong lighting, animation, and a framebuffer-based post-processing pass. The scene layer is intentionally minimal and contains one mesh, one material, one lighting setup, transform data, and fixed camera values.
+Interactive Graphics Lab is organized as a small Python package with clear boundaries between application orchestration, rendering, and graphics feature areas. The current application opens a GPU/OpenGL window and renders one procedurally generated mesh with a shader-based procedural material, Phong lighting, animation, framebuffer-based post-processing, and a compact ImGui control panel. The scene layer is intentionally minimal and contains one mesh, one material, one lighting setup, transform data, and fixed camera values.
 
 ## Package Responsibilities
 
@@ -14,7 +14,7 @@ Interactive Graphics Lab is organized as a small Python package with clear bound
 - `interactive_graphics_lab.lighting`: Ambient and point-light data used by the Phong shader pipeline.
 - `interactive_graphics_lab.animation`: Frame-rate independent scene updates for object rotation, light motion, and material time.
 - `interactive_graphics_lab.postprocessing`: Offscreen framebuffer ownership, fullscreen quad rendering, and image-space effects.
-- `interactive_graphics_lab.ui`: Future interactive controls.
+- `interactive_graphics_lab.ui`: ImGui controls for selecting existing geometry, materials, lighting values, animation state, and post-processing effect.
 - `interactive_graphics_lab.utils`: Future shared helpers that do not belong to a specific graphics topic.
 
 ## Rendering Backend Selection
@@ -33,12 +33,12 @@ Using the GPU keeps the project aligned with real-time graphics practice and lea
 
 ## Module Interaction
 
-The entry point starts the application window. The core application creates the default scene, updates animation state each frame, and delegates drawing to the rendering layer. The renderer draws the current scene into an offscreen framebuffer, then the post-processing layer presents the final image through a fullscreen shader pass.
+The entry point starts the application window. The core application creates the default scene, updates animation state each frame, delegates drawing to the rendering layer, then renders the GUI overlay. The renderer draws the current scene into an offscreen framebuffer, then the post-processing layer presents the final image through a fullscreen shader pass.
 
 At this stage, the active interaction is:
 
 ```text
-main -> core application -> animation update -> scene -> renderer -> offscreen framebuffer -> post-processing pass -> screen
+main -> core application -> animation update -> scene -> renderer -> offscreen framebuffer -> post-processing pass -> GUI overlay -> screen
 ```
 
 ## Scene Layer
@@ -72,6 +72,12 @@ The animation module provides a small `AnimationSystem` that updates scene data 
 The post-processing module renders the scene to a color texture attached to an offscreen framebuffer with a depth buffer. A fullscreen quad then samples that texture and applies the selected image-space shader before presenting to the window.
 
 Available effects are passthrough, grayscale, pixelate, and Sobel edge detection. The active effect is selected in code for now. Framebuffer resources are recreated when the window size changes.
+
+## UI Module
+
+The UI module uses ImGui with the pyglet backend to draw a small overlay panel after the post-processing pass. It edits existing scene and renderer state only: active geometry, active procedural material, one point light, animation enabled state, rotation speed, and active post-processing effect.
+
+The GUI does not implement geometry generation, material formulas, lighting calculations, or post-processing shaders. Those responsibilities remain in their existing modules.
 
 ## Future Extension Strategy
 

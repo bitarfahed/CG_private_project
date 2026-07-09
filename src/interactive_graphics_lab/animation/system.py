@@ -47,16 +47,4 @@ class AnimationSystem:
             ),
         )
 
-        if len(lights) == 1:
-            return (animated_primary,)
-
-        secondary = lights[1]
-        animated_secondary = replace(
-            secondary,
-            position=(
-                cos(angle + 2.6) * 2.1,
-                1.1,
-                sin(angle + 2.6) * 1.8,
-            ),
-        )
-        return (animated_primary, animated_secondary, *lights[2:])
+        return (animated_primary, *lights[1:])

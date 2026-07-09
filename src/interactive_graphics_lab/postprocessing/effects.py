@@ -19,7 +19,7 @@ class PostProcessEffect(StrEnum):
     SOBEL = "sobel"
 
 
-@dataclass(frozen=True)
+@dataclass
 class PostProcessSettings:
     """Runtime-selectable post-processing parameters."""
 

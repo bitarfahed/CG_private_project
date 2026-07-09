@@ -36,6 +36,8 @@ class Scene:
     lighting: LightingSettings
     transform: Transform
     camera: Camera
+    active_primitive: PrimitiveType
+    active_material: MaterialType
 
     @property
     def rotation_y_radians(self) -> float:
@@ -45,10 +47,14 @@ class Scene:
 
 def create_default_scene() -> Scene:
     """Create the polished default procedural scene."""
+    active_primitive = PrimitiveType.SPHERE
+    active_material = MaterialType.MARBLE
     return Scene(
-        mesh=MeshGenerator.create(PrimitiveType.SPHERE),
-        material=MaterialLibrary().get(MaterialType.MARBLE),
+        mesh=MeshGenerator.create(active_primitive),
+        material=MaterialLibrary().get(active_material),
         lighting=LightingSettings(),
         transform=Transform(),
         camera=Camera(),
+        active_primitive=active_primitive,
+        active_material=active_material,
     )

@@ -10,7 +10,7 @@ import moderngl
 
 from interactive_graphics_lab.core import Scene
 from interactive_graphics_lab.materials import MATERIAL_FRAGMENT_SHADER
-from interactive_graphics_lab.postprocessing import PostProcessor
+from interactive_graphics_lab.postprocessing import PostProcessEffect, PostProcessor
 from interactive_graphics_lab.rendering.gpu_mesh import GpuMesh
 
 
@@ -23,6 +23,7 @@ class Renderer:
         self._context.enable(moderngl.DEPTH_TEST)
         self._program = self._context.program(vertex_shader=_VERTEX_SHADER, fragment_shader=MATERIAL_FRAGMENT_SHADER)
         self._mesh = GpuMesh(self._context, self._program, scene.mesh)
+        self._mesh_source = scene.mesh
         self._post_processor = PostProcessor(self._context)
 
     def clear(self) -> None:
@@ -31,9 +32,19 @@ class Renderer:
 
     def render(self, scene: Scene, aspect_ratio: float, viewport_size: tuple[int, int]) -> None:
         """Render the current scene."""
+        self._ensure_scene_mesh(scene)
         self._post_processor.begin_scene(viewport_size, self.clear_color)
         self._render_scene(scene, aspect_ratio)
         self._post_processor.present()
+
+    def set_post_process_effect(self, effect: PostProcessEffect) -> None:
+        """Select the active post-processing effect."""
+        self._post_processor.settings.effect = effect
+
+    @property
+    def post_process_effect(self) -> PostProcessEffect:
+        """Return the active post-processing effect."""
+        return self._post_processor.settings.effect
 
     def _render_scene(self, scene: Scene, aspect_ratio: float) -> None:
         """Render scene geometry into the currently bound framebuffer."""
@@ -61,6 +72,13 @@ class Renderer:
         self._post_processor.release()
         self._mesh.release()
         self._program.release()
+
+    def _ensure_scene_mesh(self, scene: Scene) -> None:
+        if scene.mesh is self._mesh_source:
+            return
+        self._mesh.release()
+        self._mesh = GpuMesh(self._context, self._program, scene.mesh)
+        self._mesh_source = scene.mesh
 
     def _write_matrix(self, uniform_name: str, matrix: tuple[float, ...]) -> None:
         """Upload a 4x4 row-major matrix to GLSL as column-major bytes."""

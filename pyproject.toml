@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "Interactive desktop graphics demonstrations using a GPU/OpenGL backend."
 requires-python = ">=3.11"
 dependencies = [
+    "imgui>=2.0.0",
     "moderngl>=5.8",
     "moderngl-window>=3.1",
+    "pyopengl>=3.1.10",
 ]
 
 [project.scripts]
