@@ -52,11 +52,7 @@ class Renderer:
     def _render_scene(self, scene: Scene, aspect_ratio: float) -> None:
         """Render scene geometry into the currently bound framebuffer."""
         model = _rotation_y(scene.rotation_y_radians)
-        view = _translation(
-            -scene.camera.position[0],
-            -scene.camera.position[1],
-            -scene.camera.position[2],
-        )
+        view = _look_at(scene.camera.position, scene.camera.target)
         projection = _orthographic(aspect_ratio, scene.camera.vertical_size, scene.camera.near, scene.camera.far)
         model_view = _multiply_matrix(view, model)
         mvp = _multiply_matrix(projection, model_view)
@@ -131,12 +127,16 @@ def _identity() -> tuple[float, ...]:
     )
 
 
-def _translation(x: float, y: float, z: float) -> tuple[float, ...]:
-    matrix = list(_identity())
-    matrix[3] = x
-    matrix[7] = y
-    matrix[11] = z
-    return tuple(matrix)
+def _look_at(eye: tuple[float, float, float], target: tuple[float, float, float]) -> tuple[float, ...]:
+    forward = _normalize((target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]))
+    side = _normalize(_cross(forward, (0.0, 1.0, 0.0)))
+    up = _cross(side, forward)
+    return (
+        side[0], side[1], side[2], -_dot(side, eye),
+        up[0], up[1], up[2], -_dot(up, eye),
+        -forward[0], -forward[1], -forward[2], _dot(forward, eye),
+        0.0, 0.0, 0.0, 1.0,
+    )
 
 
 def _rotation_y(angle: float) -> tuple[float, ...]:
@@ -208,6 +208,25 @@ def _transpose_matrix3(matrix: tuple[float, ...]) -> tuple[float, ...]:
         matrix[1], matrix[4], matrix[7],
         matrix[2], matrix[5], matrix[8],
     )
+
+
+def _dot(left: tuple[float, float, float], right: tuple[float, float, float]) -> float:
+    return left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
+
+
+def _cross(left: tuple[float, float, float], right: tuple[float, float, float]) -> tuple[float, float, float]:
+    return (
+        left[1] * right[2] - left[2] * right[1],
+        left[2] * right[0] - left[0] * right[2],
+        left[0] * right[1] - left[1] * right[0],
+    )
+
+
+def _normalize(vector: tuple[float, float, float]) -> tuple[float, float, float]:
+    length = (vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]) ** 0.5
+    if length < 1e-8:
+        raise ValueError("camera view vector cannot be zero length")
+    return (vector[0] / length, vector[1] / length, vector[2] / length)
 
 
 def _matrix_bytes(row_major_matrix: tuple[float, ...]) -> bytes:

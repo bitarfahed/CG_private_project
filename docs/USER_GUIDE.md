@@ -35,6 +35,12 @@ uv run interactive-graphics-lab
 
 The application opens a window containing the rendered scene and an ImGui control panel titled `Interactive Graphics Lab`.
 
+## Camera Controls
+
+- Right mouse drag: orbit around the center of the scene
+- Mouse wheel: zoom in or out
+- `R`: reset the camera to the default view
+
 ## Running Tests
 
 Run the test suite with:
@@ -114,15 +120,15 @@ The scene is rendered to an offscreen framebuffer first, then the selected effec
 3. Open the Geometry combo box and switch between Sphere, Torus, Cone, Cylinder, Plane, and Cube.
 4. Switch materials, especially Marble, Wood, Checker, Clouds, and Lava, to show shader-based procedural appearance.
 5. Adjust the editable light's position, color, and intensity to demonstrate the effect of point-light location and color on Phong shading.
-6. Toggle animation off and on to show that scene updates are separated from rendering.
-7. Change the post-processing effect from None to Grayscale, Pixelate, and Sobel to demonstrate framebuffer-based image-space rendering.
-8. Run `uv run pytest` to show the basic non-visual test suite.
+6. Orbit and zoom the camera to inspect the same object from different viewpoints, then press `R` to reset.
+7. Toggle animation off and on to show that scene updates are separated from rendering.
+8. Change the post-processing effect from None to Grayscale, Pixelate, and Sobel to demonstrate framebuffer-based image-space rendering.
+9. Run `uv run pytest` to show the basic non-visual test suite.
 
 ## Known Limitations
 
 - The application renders a single active object rather than a multi-object scene.
 - There is no scene graph.
-- There are no camera controls.
 - There is no asset loading; geometry is procedural.
 - There is no image texture loading.
 - There are no shadows, shadow maps, or physically based rendering.

@@ -22,6 +22,35 @@ def test_default_scene_has_expected_state() -> None:
     assert scene.camera.position == (0.0, 0.0, 2.5)
 
 
+def test_camera_orbits_around_fixed_target() -> None:
+    scene = create_default_scene()
+
+    scene.camera.orbit(90.0, 30.0)
+
+    assert scene.camera.target == (0.0, 0.0, 0.0)
+    assert scene.camera.position[0] > 0.0
+    assert scene.camera.position[1] > 0.0
+    assert scene.camera.position[2] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_camera_zoom_is_clamped_and_resettable() -> None:
+    scene = create_default_scene()
+
+    scene.camera.zoom(100.0)
+    assert scene.camera.distance == scene.camera.min_distance
+    assert scene.camera.vertical_size == scene.camera.min_vertical_size
+
+    scene.camera.zoom(-100.0)
+    assert scene.camera.distance == scene.camera.max_distance
+    assert scene.camera.vertical_size == scene.camera.max_vertical_size
+
+    scene.camera.orbit(45.0, 45.0)
+    scene.camera.reset()
+
+    assert scene.camera.position == (0.0, 0.0, 2.5)
+    assert scene.camera.vertical_size == pytest.approx(2.4)
+
+
 def test_scene_geometry_and_material_can_be_changed_without_gpu() -> None:
     scene = create_default_scene()
 

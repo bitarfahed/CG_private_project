@@ -6,7 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 import imgui
-from pyglet.window import mouse
+from pyglet.window import key, mouse
 from imgui.integrations.pyglet import create_renderer
 
 from interactive_graphics_lab.animation import AnimationSystem
@@ -89,6 +89,8 @@ class GuiController:
     def _on_mouse_drag(self, x: float, y: float, dx: float, dy: float, button: int, modifiers: int) -> None:
         self._set_mouse_position(x, y)
         self._set_mouse_button(button, True)
+        if button == mouse.RIGHT and not imgui.get_io().want_capture_mouse:
+            self._scene.camera.orbit(-dx * 0.35, dy * 0.35)
 
     def _on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
         self._set_mouse_position(x, y)
@@ -101,9 +103,13 @@ class GuiController:
     def _on_mouse_scroll(self, x: float, y: float, scroll_x: float, scroll_y: float) -> None:
         self._set_mouse_position(x, y)
         imgui.get_io().mouse_wheel = scroll_y
+        if not imgui.get_io().want_capture_mouse:
+            self._scene.camera.zoom(scroll_y)
 
     def _on_key_press(self, symbol: int, modifiers: int) -> None:
         self._renderer_impl.on_key_press(symbol, modifiers)
+        if symbol == key.R and not imgui.get_io().want_capture_keyboard:
+            self._scene.camera.reset()
 
     def _on_key_release(self, symbol: int, modifiers: int) -> None:
         self._renderer_impl.on_key_release(symbol, modifiers)

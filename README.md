@@ -38,6 +38,7 @@ No screenshot is included in the repository yet.
   - Pixelate
   - Sobel edge detection
 - ImGui control panel for selecting geometry, material, lighting values, animation state, and post-processing effect
+- Simple orbit camera controls for inspecting the scene
 - Basic CPU-side unit tests for deterministic non-visual logic
 
 ## Demonstrated Graphics Concepts
@@ -49,6 +50,7 @@ No screenshot is included in the repository yet.
 - Phong reflection model
 - Normal transformation for lighting
 - Real-time animation using delta time
+- Orbit camera view transformation
 - Render-to-texture and fullscreen post-processing
 - Immediate-mode GUI integration with a GPU render loop
 
@@ -92,6 +94,12 @@ The GUI panel provides compact controls for:
 
 The GUI edits existing scene and renderer state. It does not own geometry generation, material formulas, lighting calculations, or post-processing shader logic.
 
+## Camera Controls
+
+- Right mouse drag: orbit around the center of the scene
+- Mouse wheel: zoom in or out
+- `R`: reset the camera to the default view
+
 ## Testing
 
 Run the test suite with:
@@ -129,7 +137,6 @@ Interactive Graphics Lab was developed as a small university Computer Graphics p
 
 - No asset loading; all core geometry is procedural.
 - No scene graph or multi-object editor.
-- No camera controls.
 - No shadow mapping.
 - No physically based rendering.
 - No normal mapping or image texture loading.
@@ -140,7 +147,6 @@ Interactive Graphics Lab was developed as a small university Computer Graphics p
 ## Future Improvements
 
 - Add screenshot documentation for GitHub.
-- Add camera orbit controls.
 - Add more post-processing effects.
 - Add optional controls for material parameters.
 - Add a small scene preset system.
