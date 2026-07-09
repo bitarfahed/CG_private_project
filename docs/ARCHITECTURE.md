@@ -2,13 +2,13 @@
 
 ## Overview
 
-Interactive Graphics Lab is organized as a small Python package with clear boundaries between application orchestration, rendering, and future graphics feature areas. The current application opens a GPU/OpenGL window and renders one procedurally generated mesh with a shader-based procedural material and Phong lighting. No scene management, animation, post-processing, or GUI behavior is implemented yet.
+Interactive Graphics Lab is organized as a small Python package with clear boundaries between application orchestration, rendering, and graphics feature areas. The current application opens a GPU/OpenGL window and renders one procedurally generated mesh with a shader-based procedural material and Phong lighting. The scene layer is intentionally minimal and contains one mesh, one material, one lighting setup, transform data, and fixed camera values.
 
 ## Package Responsibilities
 
 - `interactive_graphics_lab.main`: Command-line entry point that starts the application.
-- `interactive_graphics_lab.core`: Application-level orchestration and window lifecycle.
-- `interactive_graphics_lab.rendering`: GPU rendering integration, mesh buffer upload, and frame-level rendering helpers.
+- `interactive_graphics_lab.core`: Application-level orchestration, window lifecycle, and the minimal single-object scene definition.
+- `interactive_graphics_lab.rendering`: GPU rendering integration, shader ownership, mesh buffer upload, and frame-level drawing.
 - `interactive_graphics_lab.geometry`: Procedural mesh generation and reusable mesh data structures.
 - `interactive_graphics_lab.materials`: Procedural material definitions, defaults, shader logic, and uniform upload.
 - `interactive_graphics_lab.lighting`: Ambient and point-light data used by the Phong shader pipeline.
@@ -33,13 +33,19 @@ Using the GPU keeps the project aligned with real-time graphics practice and lea
 
 ## Module Interaction
 
-The entry point starts the application window. The core application owns the window lifecycle and delegates per-frame drawing to the rendering layer. The renderer currently requests one procedural mesh from the geometry module, uploads its vertex and index data to the GPU, applies one procedural material, uploads lighting uniforms, and draws it with a Phong shader.
+The entry point starts the application window. The core application creates the default scene and delegates per-frame drawing to the rendering layer. The renderer receives the scene, uploads its mesh data to the GPU, applies the scene material and lighting uniforms, and draws it with the Phong shader.
 
 At this stage, the active interaction is:
 
 ```text
-main -> core application -> renderer -> geometry mesh + material + lighting -> GPU buffers -> OpenGL draw
+main -> core application -> scene -> renderer -> GPU buffers + uniforms -> OpenGL draw
 ```
+
+## Scene Layer
+
+The scene layer is deliberately lightweight. It does not implement a scene graph, object hierarchy, runtime selection, or asset loading. The current `Scene` contains the procedural mesh, procedural material, lighting settings, object transform, and fixed camera values needed for the single rendered object.
+
+The default scene is built from a UV sphere, the marble procedural material, and two point lights. Future prompts can extend this layer for animation, post-processing, and GUI-driven selection without coupling geometry, material, lighting, and rendering modules together.
 
 ## Geometry Module
 
@@ -55,7 +61,7 @@ Procedural appearance is generated in GLSL from UV coordinates, positions, norma
 
 ## Lighting Module
 
-The lighting module defines ambient lighting settings and point-light data for shader-based Phong shading. The current renderer uploads camera position, ambient light, point-light color, point-light position, intensity, specular strength, and shininess. Lighting modifies the procedural material color rather than replacing it.
+The lighting module defines ambient lighting settings and point-light data for shader-based Phong shading. The current renderer uploads camera position, ambient light, point-light color, point-light position, intensity, specular strength, and shininess from the scene. Lighting modifies the procedural material color rather than replacing it.
 
 ## Future Extension Strategy
 

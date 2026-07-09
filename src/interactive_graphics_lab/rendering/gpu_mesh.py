@@ -25,3 +25,9 @@ class GpuMesh:
     def render(self) -> None:
         """Render the indexed mesh."""
         self._vertex_array.render(mode=moderngl.TRIANGLES)
+
+    def release(self) -> None:
+        """Release GPU resources owned by this mesh."""
+        self._vertex_array.release()
+        self._index_buffer.release()
+        self._vertex_buffer.release()

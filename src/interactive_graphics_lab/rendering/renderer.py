@@ -3,57 +3,56 @@
 from __future__ import annotations
 
 from array import array
-from math import cos, radians, sin
+from math import cos, sin
 from typing import Any
 
 import moderngl
 
-from interactive_graphics_lab.geometry import MeshGenerator, PrimitiveType
-from interactive_graphics_lab.lighting import LightingSettings
-from interactive_graphics_lab.materials import MATERIAL_FRAGMENT_SHADER, MaterialLibrary, MaterialType
+from interactive_graphics_lab.core import Scene
+from interactive_graphics_lab.materials import MATERIAL_FRAGMENT_SHADER
 from interactive_graphics_lab.rendering.gpu_mesh import GpuMesh
 
 
 class Renderer:
-    """Small rendering facade for the current procedural mesh demo."""
+    """GPU renderer for the current single-object scene."""
 
-    def __init__(self, context: Any) -> None:
+    def __init__(self, context: Any, scene: Scene) -> None:
         self._context = context
         self.clear_color = (0.08, 0.10, 0.13, 1.0)
         self._context.enable(moderngl.DEPTH_TEST)
         self._program = self._context.program(vertex_shader=_VERTEX_SHADER, fragment_shader=MATERIAL_FRAGMENT_SHADER)
-        self._material = MaterialLibrary().get(MaterialType.MARBLE)
-        self._lighting = LightingSettings()
-        self._camera_position = (0.0, 0.0, 2.5)
-        self._mesh = GpuMesh(
-            self._context,
-            self._program,
-            MeshGenerator.create(PrimitiveType.SPHERE),
-        )
+        self._mesh = GpuMesh(self._context, self._program, scene.mesh)
 
     def clear(self) -> None:
         """Clear the current frame to the configured background color."""
         self._context.clear(*self.clear_color)
 
-    def render(self, aspect_ratio: float) -> None:
-        """Render the current procedural mesh."""
+    def render(self, scene: Scene, aspect_ratio: float) -> None:
+        """Render the current scene."""
         self.clear()
-        model = _rotation_y(radians(-24.0))
-        view = _translation(0.0, 0.0, -2.5)
-        projection = _orthographic(aspect_ratio, vertical_size=2.4, near=0.1, far=10.0)
+        model = _rotation_y(scene.rotation_y_radians)
+        view = _translation(
+            -scene.camera.position[0],
+            -scene.camera.position[1],
+            -scene.camera.position[2],
+        )
+        projection = _orthographic(aspect_ratio, scene.camera.vertical_size, scene.camera.near, scene.camera.far)
         model_view = _multiply_matrix(view, model)
         mvp = _multiply_matrix(projection, model_view)
         normal_matrix = _normal_matrix(model)
 
         self._write_matrix("u_model", model)
-        self._write_matrix("u_view", view)
-        self._write_matrix("u_projection", projection)
         self._write_matrix("u_mvp", mvp)
         self._write_matrix3("u_normal_matrix", normal_matrix)
-        self._program["u_camera_position"].value = self._camera_position
-        self._material.apply(self._program)
-        self._lighting.apply(self._program)
+        self._program["u_camera_position"].value = scene.camera.position
+        scene.material.apply(self._program)
+        scene.lighting.apply(self._program)
         self._mesh.render()
+
+    def release(self) -> None:
+        """Release GPU resources owned by the renderer."""
+        self._mesh.release()
+        self._program.release()
 
     def _write_matrix(self, uniform_name: str, matrix: tuple[float, ...]) -> None:
         """Upload a 4x4 row-major matrix to GLSL as column-major bytes."""
@@ -72,8 +71,6 @@ in vec3 in_normal;
 in vec2 in_uv;
 
 uniform mat4 u_model;
-uniform mat4 u_view;
-uniform mat4 u_projection;
 uniform mat4 u_mvp;
 uniform mat3 u_normal_matrix;
 
@@ -83,9 +80,7 @@ out vec2 v_uv;
 
 void main() {
     vec4 world_position = u_model * vec4(in_position, 1.0);
-    vec4 projected_position = u_projection * u_view * world_position;
-    vec4 mvp_position = u_mvp * vec4(in_position, 1.0);
-    gl_Position = mix(projected_position, mvp_position, 0.5);
+    gl_Position = u_mvp * vec4(in_position, 1.0);
     v_position = world_position.xyz;
     v_normal = normalize(u_normal_matrix * in_normal);
     v_uv = in_uv;
