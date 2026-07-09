@@ -211,8 +211,14 @@ Possible extensions include:
 - more post-processing effects
 - additional material parameter controls in the GUI
 - small scene presets
-- optional screenshots for documentation
-- visual regression testing for a larger version of the project
+- Shadow Mapping
+- Additional Procedural Materials
+- Bezier/Spline Camera Paths
+- Procedural Terrain Generation
+- Multiple Dynamic Lights
+- HDR/Bloom Pipeline
+- Normal Mapping
+- Subdivision Surfaces
 - better separation of GLSL shader sources into dedicated files
 
 ## 16. Conclusion
