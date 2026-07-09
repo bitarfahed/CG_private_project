@@ -44,6 +44,23 @@ def test_generated_mesh_normals_are_unit_length(primitive: PrimitiveType) -> Non
         assert length == pytest.approx(1.0, abs=1e-6)
 
 
+def test_plane_default_is_camera_facing() -> None:
+    mesh = generate_plane()
+
+    assert set(mesh.positions[2::3]) == {0.0}
+    assert set(mesh.normals[0::3]) == {0.0}
+    assert set(mesh.normals[1::3]) == {0.0}
+    assert set(mesh.normals[2::3]) == {1.0}
+
+    first_triangle = mesh.indices[:3]
+    points = [mesh.positions[index * 3 : index * 3 + 3] for index in first_triangle]
+    edge_a = tuple(points[1][axis] - points[0][axis] for axis in range(3))
+    edge_b = tuple(points[2][axis] - points[0][axis] for axis in range(3))
+    cross_z = edge_a[0] * edge_b[1] - edge_a[1] * edge_b[0]
+
+    assert cross_z > 0.0
+
+
 @pytest.mark.parametrize(
     ("generator", "kwargs"),
     [

@@ -38,7 +38,7 @@ class MeshGenerator:
 
 
 def generate_plane(width: float = 2.0, depth: float = 2.0, subdivisions: int = 1) -> Mesh:
-    """Generate a subdivided XZ plane with upward-facing normals."""
+    """Generate a subdivided XY plane with camera-facing normals."""
     _require_positive("width", width)
     _require_positive("depth", depth)
     _require_minimum("subdivisions", subdivisions, 1)
@@ -50,12 +50,12 @@ def generate_plane(width: float = 2.0, depth: float = 2.0, subdivisions: int = 1
 
     for z_index in range(subdivisions + 1):
         v = z_index / subdivisions
-        z = (v - 0.5) * depth
+        y = (v - 0.5) * depth
         for x_index in range(subdivisions + 1):
             u = x_index / subdivisions
             x = (u - 0.5) * width
-            positions.extend((x, 0.0, z))
-            normals.extend((0.0, 1.0, 0.0))
+            positions.extend((x, y, 0.0))
+            normals.extend((0.0, 0.0, 1.0))
             uvs.extend((u, v))
 
     row_size = subdivisions + 1
@@ -65,8 +65,8 @@ def generate_plane(width: float = 2.0, depth: float = 2.0, subdivisions: int = 1
             lower_right = lower_left + 1
             upper_left = lower_left + row_size
             upper_right = upper_left + 1
-            indices.extend((lower_left, upper_left, lower_right))
-            indices.extend((lower_right, upper_left, upper_right))
+            indices.extend((lower_left, lower_right, upper_left))
+            indices.extend((lower_right, upper_right, upper_left))
 
     return Mesh(tuple(positions), tuple(normals), tuple(uvs), tuple(indices))
 
