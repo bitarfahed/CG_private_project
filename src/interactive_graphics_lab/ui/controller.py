@@ -6,6 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 import imgui
+from pyglet.window import mouse
 from imgui.integrations.pyglet import create_renderer
 
 from interactive_graphics_lab.animation import AnimationSystem
@@ -22,14 +23,20 @@ class GuiController:
 
     def __init__(self, window: Any, scene: Scene, renderer: Renderer, animation: AnimationSystem) -> None:
         imgui.create_context()
-        self._renderer_impl = create_renderer(window)
+        self._window = window
+        self._renderer_impl = create_renderer(window, attach_callbacks=False)
+        self._renderer_impl._window = window
         self._scene = scene
         self._renderer = renderer
         self._animation = animation
         self._materials = MaterialLibrary()
+        self._panel_position = (12.0, 12.0)
+        self._panel_size = (330.0, 430.0)
+        self._attach_callbacks()
 
     def render(self) -> None:
         """Render the GUI overlay for the current frame."""
+        self._sync_display_metrics()
         self._renderer_impl.process_inputs()
         imgui.new_frame()
         self._draw_panel()
@@ -40,8 +47,79 @@ class GuiController:
         """Release ImGui renderer resources."""
         self._renderer_impl.shutdown()
 
+    def _attach_callbacks(self) -> None:
+        self._window.push_handlers(
+            on_mouse_motion=self._on_mouse_motion,
+            on_mouse_drag=self._on_mouse_drag,
+            on_mouse_press=self._on_mouse_press,
+            on_mouse_release=self._on_mouse_release,
+            on_mouse_scroll=self._on_mouse_scroll,
+            on_key_press=self._on_key_press,
+            on_key_release=self._on_key_release,
+            on_text=self._on_text,
+            on_resize=self._on_resize,
+        )
+
+    def _sync_display_metrics(self) -> None:
+        io = imgui.get_io()
+        width, height = self._window.get_size()
+        framebuffer_width, framebuffer_height = self._window.get_framebuffer_size()
+        width = max(1, int(width))
+        height = max(1, int(height))
+        io.display_size = (float(width), float(height))
+        io.display_fb_scale = (
+            float(framebuffer_width) / float(width),
+            float(framebuffer_height) / float(height),
+        )
+
+    def _set_mouse_position(self, x: float, y: float) -> None:
+        self._sync_display_metrics()
+        io = imgui.get_io()
+        io.mouse_pos = (float(x), float(io.display_size.y - y))
+
+    def _on_mouse_motion(self, x: float, y: float, dx: float, dy: float) -> None:
+        self._set_mouse_position(x, y)
+
+    def _on_mouse_drag(self, x: float, y: float, dx: float, dy: float, button: int, modifiers: int) -> None:
+        self._set_mouse_position(x, y)
+        self._set_mouse_button(button, True)
+
+    def _on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> None:
+        self._set_mouse_position(x, y)
+        self._set_mouse_button(button, True)
+
+    def _on_mouse_release(self, x: float, y: float, button: int, modifiers: int) -> None:
+        self._set_mouse_position(x, y)
+        self._set_mouse_button(button, False)
+
+    def _on_mouse_scroll(self, x: float, y: float, scroll_x: float, scroll_y: float) -> None:
+        self._set_mouse_position(x, y)
+        imgui.get_io().mouse_wheel = scroll_y
+
+    def _on_key_press(self, symbol: int, modifiers: int) -> None:
+        self._renderer_impl.on_key_press(symbol, modifiers)
+
+    def _on_key_release(self, symbol: int, modifiers: int) -> None:
+        self._renderer_impl.on_key_release(symbol, modifiers)
+
+    def _on_text(self, text: str) -> None:
+        self._renderer_impl.on_text(text)
+
+    def _on_resize(self, width: int, height: int) -> None:
+        self._sync_display_metrics()
+
+    def _set_mouse_button(self, button: int, pressed: bool) -> None:
+        io = imgui.get_io()
+        if button == mouse.LEFT:
+            io.mouse_down[0] = pressed
+        elif button == mouse.MIDDLE:
+            io.mouse_down[1] = pressed
+        elif button == mouse.RIGHT:
+            io.mouse_down[2] = pressed
+
     def _draw_panel(self) -> None:
-        imgui.set_next_window_position(12, 12, condition=imgui.ONCE)
+        self._panel_position = _clamp_panel_position(self._panel_position, self._panel_size)
+        imgui.set_next_window_position(*self._panel_position, condition=imgui.ALWAYS)
         imgui.set_next_window_size(330, 430, condition=imgui.ONCE)
         imgui.begin("Interactive Graphics Lab", True)
         self._draw_geometry_controls()
@@ -53,6 +131,8 @@ class GuiController:
         self._draw_animation_controls()
         imgui.separator()
         self._draw_postprocessing_controls()
+        self._panel_position = _vec2_to_tuple(imgui.get_window_position())
+        self._panel_size = _vec2_to_tuple(imgui.get_window_size())
         imgui.end()
 
     def _draw_geometry_controls(self) -> None:
@@ -134,3 +214,17 @@ class GuiController:
 
 def _title_label(value: str) -> str:
     return value.replace("_", " ").replace("/", " / ").title()
+
+
+def _clamp_panel_position(position: tuple[float, float], size: tuple[float, float]) -> tuple[float, float]:
+    io = imgui.get_io()
+    margin = 8.0
+    max_x = max(margin, float(io.display_size.x) - size[0] - margin)
+    max_y = max(margin, float(io.display_size.y) - size[1] - margin)
+    x = min(max(position[0], margin), max_x)
+    y = min(max(position[1], margin), max_y)
+    return (x, y)
+
+
+def _vec2_to_tuple(value: Any) -> tuple[float, float]:
+    return (float(value.x), float(value.y))
