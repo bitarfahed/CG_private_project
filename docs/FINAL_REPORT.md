@@ -44,7 +44,7 @@ Application loop
 -> screen
 ```
 
-The scene layer is deliberately small. It contains one active mesh, one material, lighting settings, transform data, and fixed camera values. It is not a scene graph.
+The scene layer is deliberately small. It contains one active mesh, one material, lighting settings, transform data, and a simple orbit camera. It is not a scene graph.
 
 ## 4. Rendering Backend Decision
 
@@ -135,6 +135,8 @@ The GUI exposes:
 - animation rotation speed
 - active post-processing effect
 
+The camera can be controlled with Right Mouse Button + Drag for orbit, Mouse Wheel for zoom, and `R` for reset. Camera controls work only when the cursor is not interacting with the GUI panel. On a touchpad, right-click may correspond to a two-finger click or the operating system's configured secondary-click gesture.
+
 The GUI only edits existing scene and renderer state. It does not implement graphics algorithms itself.
 
 ## 11. Testing Strategy
@@ -192,7 +194,6 @@ The project does not include:
 
 - asset loading
 - scene graph
-- camera controls
 - multiple object editing
 - shadow mapping
 - physically based rendering
@@ -207,7 +208,6 @@ The test suite validates pure Python logic but does not verify rendered output.
 
 Possible extensions include:
 
-- camera orbit and zoom controls
 - more post-processing effects
 - additional material parameter controls in the GUI
 - small scene presets

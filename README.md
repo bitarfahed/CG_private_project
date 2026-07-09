@@ -96,9 +96,11 @@ The GUI edits existing scene and renderer state. It does not own geometry genera
 
 ## Camera Controls
 
-- Right mouse drag: orbit around the center of the scene
-- Mouse wheel: zoom in or out
+- Right Mouse Button + Drag: orbit the camera around the center of the scene
+- Mouse Wheel: zoom in or out
 - `R`: reset the camera to the default view
+
+Camera controls work only when the cursor is not interacting with the GUI panel. On a touchpad, right-click may correspond to a two-finger click or the operating system's configured secondary-click gesture.
 
 ## Testing
 
