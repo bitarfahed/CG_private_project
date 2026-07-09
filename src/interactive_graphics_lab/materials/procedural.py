@@ -171,6 +171,20 @@ uniform float u_frequency;
 uniform float u_contrast;
 uniform float u_noise_strength;
 uniform float u_time;
+uniform vec3 u_camera_position;
+uniform vec3 u_ambient_color;
+uniform float u_ambient_intensity;
+uniform float u_specular_strength;
+uniform float u_shininess;
+uniform int u_point_light_count;
+
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    float intensity;
+};
+
+uniform PointLight u_point_lights[4];
 
 out vec4 frag_color;
 
@@ -218,6 +232,34 @@ vec3 apply_contrast(vec3 color) {
     return clamp((color - 0.5) * u_contrast + 0.5, 0.0, 1.0);
 }
 
+vec3 apply_phong_lighting(vec3 material_color, vec3 position, vec3 normal) {
+    vec3 n = normalize(normal);
+    vec3 view_dir = normalize(u_camera_position - position);
+    vec3 ambient = material_color * u_ambient_color * u_ambient_intensity;
+    vec3 lit_color = ambient;
+
+    for (int i = 0; i < 4; i++) {
+        if (i >= u_point_light_count) {
+            break;
+        }
+
+        vec3 light_vector = u_point_lights[i].position - position;
+        float distance_to_light = length(light_vector);
+        vec3 light_dir = normalize(light_vector);
+        float attenuation = 1.0 / (1.0 + 0.08 * distance_to_light + 0.025 * distance_to_light * distance_to_light);
+        float diffuse_factor = max(dot(n, light_dir), 0.0);
+        vec3 diffuse = material_color * u_point_lights[i].color * diffuse_factor;
+
+        vec3 reflect_dir = reflect(-light_dir, n);
+        float specular_factor = pow(max(dot(view_dir, reflect_dir), 0.0), u_shininess);
+        vec3 specular = u_point_lights[i].color * u_specular_strength * specular_factor;
+
+        lit_color += (diffuse + specular) * u_point_lights[i].intensity * attenuation;
+    }
+
+    return clamp(lit_color, 0.0, 1.0);
+}
+
 void main() {
     vec3 p = v_position;
     vec2 uv = v_uv;
@@ -260,8 +302,8 @@ void main() {
         color = mix(u_secondary_color, hot, cracks);
     }
 
-    vec3 normal_tint = normalize(v_normal) * 0.08 + 0.92;
-    frag_color = vec4(apply_contrast(color * normal_tint), 1.0);
+    vec3 material_color = apply_contrast(color);
+    frag_color = vec4(apply_phong_lighting(material_color, p, v_normal), 1.0);
 }
 """
 

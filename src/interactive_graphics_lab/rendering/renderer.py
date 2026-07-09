@@ -9,6 +9,7 @@ from typing import Any
 import moderngl
 
 from interactive_graphics_lab.geometry import MeshGenerator, PrimitiveType
+from interactive_graphics_lab.lighting import LightingSettings
 from interactive_graphics_lab.materials import MATERIAL_FRAGMENT_SHADER, MaterialLibrary, MaterialType
 from interactive_graphics_lab.rendering.gpu_mesh import GpuMesh
 
@@ -22,6 +23,8 @@ class Renderer:
         self._context.enable(moderngl.DEPTH_TEST)
         self._program = self._context.program(vertex_shader=_VERTEX_SHADER, fragment_shader=MATERIAL_FRAGMENT_SHADER)
         self._material = MaterialLibrary().get(MaterialType.MARBLE)
+        self._lighting = LightingSettings()
+        self._camera_position = (0.0, 0.0, 2.5)
         self._mesh = GpuMesh(
             self._context,
             self._program,
@@ -47,7 +50,9 @@ class Renderer:
         self._write_matrix("u_projection", projection)
         self._write_matrix("u_mvp", mvp)
         self._write_matrix3("u_normal_matrix", normal_matrix)
+        self._program["u_camera_position"].value = self._camera_position
         self._material.apply(self._program)
+        self._lighting.apply(self._program)
         self._mesh.render()
 
     def _write_matrix(self, uniform_name: str, matrix: tuple[float, ...]) -> None:
