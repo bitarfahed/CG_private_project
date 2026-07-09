@@ -20,5 +20,5 @@ class InteractiveGraphicsLabApp(WindowConfig):
         self.renderer = Renderer(self.ctx)
 
     def on_render(self, time: float, frame_time: float) -> None:
-        """Draw one empty frame."""
-        self.renderer.clear()
+        """Draw one frame."""
+        self.renderer.render()

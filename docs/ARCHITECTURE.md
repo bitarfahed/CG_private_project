@@ -2,14 +2,14 @@
 
 ## Overview
 
-Interactive Graphics Lab is organized as a small Python package with clear boundaries between application orchestration, rendering, and future graphics feature areas. The current skeleton opens a GPU/OpenGL window and clears the framebuffer to a fixed background color. No scene, geometry, material, lighting, animation, post-processing, or GUI behavior is implemented yet.
+Interactive Graphics Lab is organized as a small Python package with clear boundaries between application orchestration, rendering, and future graphics feature areas. The current application opens a GPU/OpenGL window and renders one procedurally generated mesh. No scene management, material system, lighting, animation, post-processing, or GUI behavior is implemented yet.
 
 ## Package Responsibilities
 
 - `interactive_graphics_lab.main`: Command-line entry point that starts the application.
 - `interactive_graphics_lab.core`: Application-level orchestration and window lifecycle.
-- `interactive_graphics_lab.rendering`: GPU rendering integration and frame-level rendering helpers.
-- `interactive_graphics_lab.geometry`: Future procedural mesh generation.
+- `interactive_graphics_lab.rendering`: GPU rendering integration, mesh buffer upload, and frame-level rendering helpers.
+- `interactive_graphics_lab.geometry`: Procedural mesh generation and reusable mesh data structures.
 - `interactive_graphics_lab.materials`: Future procedural material definitions and parameters.
 - `interactive_graphics_lab.lighting`: Future lighting configuration and shading-related data.
 - `interactive_graphics_lab.animation`: Future time-based object, light, and material animation.
@@ -33,13 +33,19 @@ Using the GPU keeps the project aligned with real-time graphics practice and lea
 
 ## Module Interaction
 
-The entry point starts the application window. The core application owns the window lifecycle and delegates per-frame drawing to the rendering layer. As future phases are added, the renderer will consume data prepared by geometry, materials, lighting, animation, post-processing, and UI modules.
+The entry point starts the application window. The core application owns the window lifecycle and delegates per-frame drawing to the rendering layer. The renderer currently requests one procedural mesh from the geometry module, uploads its vertex and index data to the GPU, and draws it with a minimal debug shader.
 
-At this stage, the only active interaction is:
+At this stage, the active interaction is:
 
 ```text
-main -> core application -> renderer -> OpenGL context clear
+main -> core application -> renderer -> geometry mesh -> GPU buffers -> OpenGL draw
 ```
+
+## Geometry Module
+
+The geometry module exposes a `Mesh` representation containing positions, normals, UV coordinates, and triangle indices. Primitive generation is available through individual generator functions and the `MeshGenerator` factory. Supported primitives are plane, cube, UV sphere, cylinder, cone, and torus.
+
+All mesh data is generated mathematically. The project does not load OBJ, STL, GLTF, or other external mesh formats.
 
 ## Future Extension Strategy
 
