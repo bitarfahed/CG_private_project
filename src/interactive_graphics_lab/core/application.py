@@ -28,4 +28,4 @@ class InteractiveGraphicsLabApp(WindowConfig):
         width, height = self.wnd.size
         aspect_ratio = width / height if height else self.aspect_ratio
         self.animation.update(self.scene, frame_time)
-        self.renderer.render(self.scene, aspect_ratio)
+        self.renderer.render(self.scene, aspect_ratio, (width, height))

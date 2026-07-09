@@ -10,6 +10,7 @@ import moderngl
 
 from interactive_graphics_lab.core import Scene
 from interactive_graphics_lab.materials import MATERIAL_FRAGMENT_SHADER
+from interactive_graphics_lab.postprocessing import PostProcessor
 from interactive_graphics_lab.rendering.gpu_mesh import GpuMesh
 
 
@@ -22,14 +23,20 @@ class Renderer:
         self._context.enable(moderngl.DEPTH_TEST)
         self._program = self._context.program(vertex_shader=_VERTEX_SHADER, fragment_shader=MATERIAL_FRAGMENT_SHADER)
         self._mesh = GpuMesh(self._context, self._program, scene.mesh)
+        self._post_processor = PostProcessor(self._context)
 
     def clear(self) -> None:
         """Clear the current frame to the configured background color."""
         self._context.clear(*self.clear_color)
 
-    def render(self, scene: Scene, aspect_ratio: float) -> None:
+    def render(self, scene: Scene, aspect_ratio: float, viewport_size: tuple[int, int]) -> None:
         """Render the current scene."""
-        self.clear()
+        self._post_processor.begin_scene(viewport_size, self.clear_color)
+        self._render_scene(scene, aspect_ratio)
+        self._post_processor.present()
+
+    def _render_scene(self, scene: Scene, aspect_ratio: float) -> None:
+        """Render scene geometry into the currently bound framebuffer."""
         model = _rotation_y(scene.rotation_y_radians)
         view = _translation(
             -scene.camera.position[0],
@@ -51,6 +58,7 @@ class Renderer:
 
     def release(self) -> None:
         """Release GPU resources owned by the renderer."""
+        self._post_processor.release()
         self._mesh.release()
         self._program.release()
 
