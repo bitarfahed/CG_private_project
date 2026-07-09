@@ -20,6 +20,7 @@ class InteractiveGraphicsLabApp(WindowConfig):
 
     def __init__(self, **kwargs: object) -> None:
         super().__init__(**kwargs)
+        self._released = False
         self.scene = create_default_scene()
         self.animation = AnimationSystem(enabled=True)
         self.renderer = Renderer(self.ctx, self.scene)
@@ -35,5 +36,8 @@ class InteractiveGraphicsLabApp(WindowConfig):
 
     def on_close(self) -> None:
         """Release GPU resources on shutdown."""
+        if self._released:
+            return
         self.gui.release()
         self.renderer.release()
+        self._released = True

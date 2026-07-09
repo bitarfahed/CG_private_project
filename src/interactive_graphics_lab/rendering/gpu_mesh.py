@@ -13,6 +13,7 @@ class GpuMesh:
     """ModernGL buffers and vertex array for a mesh."""
 
     def __init__(self, context: Any, program: Any, mesh: Mesh) -> None:
+        self._released = False
         self._vertex_buffer = context.buffer(mesh.interleaved_vertex_bytes())
         self._index_buffer = context.buffer(mesh.index_bytes())
         self._vertex_array = context.vertex_array(
@@ -28,6 +29,9 @@ class GpuMesh:
 
     def release(self) -> None:
         """Release GPU resources owned by this mesh."""
+        if self._released:
+            return
         self._vertex_array.release()
         self._index_buffer.release()
         self._vertex_buffer.release()
+        self._released = True

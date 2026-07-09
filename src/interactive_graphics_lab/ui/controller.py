@@ -30,12 +30,15 @@ class GuiController:
         self._renderer = renderer
         self._animation = animation
         self._materials = MaterialLibrary()
+        self._released = False
         self._panel_position = (12.0, 12.0)
         self._panel_size = (330.0, 430.0)
         self._attach_callbacks()
 
     def render(self) -> None:
         """Render the GUI overlay for the current frame."""
+        if self._released:
+            return
         self._sync_display_metrics()
         self._renderer_impl.process_inputs()
         imgui.new_frame()
@@ -45,7 +48,10 @@ class GuiController:
 
     def release(self) -> None:
         """Release ImGui renderer resources."""
+        if self._released:
+            return
         self._renderer_impl.shutdown()
+        self._released = True
 
     def _attach_callbacks(self) -> None:
         self._window.push_handlers(
@@ -123,12 +129,16 @@ class GuiController:
         imgui.set_next_window_size(330, 430, condition=imgui.ONCE)
         imgui.begin("Interactive Graphics Lab", True)
         self._draw_geometry_controls()
+        imgui.spacing()
         imgui.separator()
         self._draw_material_controls()
+        imgui.spacing()
         imgui.separator()
         self._draw_lighting_controls()
+        imgui.spacing()
         imgui.separator()
         self._draw_animation_controls()
+        imgui.spacing()
         imgui.separator()
         self._draw_postprocessing_controls()
         self._panel_position = _vec2_to_tuple(imgui.get_window_position())

@@ -33,6 +33,7 @@ class PostProcessor:
     def __init__(self, context: Any, settings: PostProcessSettings | None = None) -> None:
         self._context = context
         self.settings = settings or PostProcessSettings()
+        self._released = False
         self._size = (0, 0)
         self._color_texture: Any | None = None
         self._depth_buffer: Any | None = None
@@ -52,6 +53,8 @@ class PostProcessor:
 
     def begin_scene(self, size: tuple[int, int], clear_color: tuple[float, float, float, float]) -> None:
         """Bind and clear the offscreen scene framebuffer."""
+        if self._released:
+            raise RuntimeError("cannot render with a released post processor")
         self._ensure_size(size)
         if self._framebuffer is None:
             raise RuntimeError("post-processing framebuffer was not initialized")
@@ -62,6 +65,8 @@ class PostProcessor:
 
     def present(self) -> None:
         """Draw the selected effect to the default framebuffer."""
+        if self._released:
+            raise RuntimeError("cannot present with a released post processor")
         if self._color_texture is None:
             raise RuntimeError("post-processing color texture was not initialized")
 
@@ -80,12 +85,15 @@ class PostProcessor:
 
     def release(self) -> None:
         """Release all GPU resources owned by the post processor."""
+        if self._released:
+            return
         self._release_framebuffer_resources()
         for vertex_array in self._quad_arrays.values():
             vertex_array.release()
         for program in self._programs.values():
             program.release()
         self._quad_buffer.release()
+        self._released = True
 
     def _ensure_size(self, size: tuple[int, int]) -> None:
         width = max(1, int(size[0]))

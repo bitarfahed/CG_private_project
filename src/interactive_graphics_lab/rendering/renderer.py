@@ -19,6 +19,7 @@ class Renderer:
 
     def __init__(self, context: Any, scene: Scene) -> None:
         self._context = context
+        self._released = False
         self.clear_color = (0.08, 0.10, 0.13, 1.0)
         self._context.enable(moderngl.DEPTH_TEST)
         self._program = self._context.program(vertex_shader=_VERTEX_SHADER, fragment_shader=MATERIAL_FRAGMENT_SHADER)
@@ -32,6 +33,8 @@ class Renderer:
 
     def render(self, scene: Scene, aspect_ratio: float, viewport_size: tuple[int, int]) -> None:
         """Render the current scene."""
+        if self._released:
+            raise RuntimeError("cannot render with a released renderer")
         self._ensure_scene_mesh(scene)
         self._post_processor.begin_scene(viewport_size, self.clear_color)
         self._render_scene(scene, aspect_ratio)
@@ -69,11 +72,16 @@ class Renderer:
 
     def release(self) -> None:
         """Release GPU resources owned by the renderer."""
+        if self._released:
+            return
         self._post_processor.release()
         self._mesh.release()
         self._program.release()
+        self._released = True
 
     def _ensure_scene_mesh(self, scene: Scene) -> None:
+        if scene.mesh.vertex_count <= 0 or scene.mesh.triangle_count <= 0:
+            raise ValueError("scene mesh must contain renderable triangle data")
         if scene.mesh is self._mesh_source:
             return
         self._mesh.release()
