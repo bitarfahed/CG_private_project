@@ -10,7 +10,7 @@ from interactive_graphics_lab.lighting import LightingSettings
 from interactive_graphics_lab.materials import MaterialLibrary, MaterialType, ProceduralMaterial
 
 
-@dataclass(frozen=True)
+@dataclass
 class Transform:
     """Object transform values used by the renderer."""
 
@@ -27,7 +27,7 @@ class Camera:
     far: float = 10.0
 
 
-@dataclass(frozen=True)
+@dataclass
 class Scene:
     """Single-object scene used by the current application."""
 
