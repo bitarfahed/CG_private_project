@@ -1,6 +1,19 @@
 [project]
 name = "cg-private-project"
 version = "0.1.0"
-description = "Add your description here"
+description = "Interactive desktop graphics demonstrations using a GPU/OpenGL backend."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "moderngl>=5.8",
+    "moderngl-window>=3.1",
+]
+
+[project.scripts]
+interactive-graphics-lab = "interactive_graphics_lab.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
