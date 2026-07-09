@@ -79,6 +79,16 @@ The UI module uses ImGui with the pyglet backend to draw a small overlay panel a
 
 The GUI does not implement geometry generation, material formulas, lighting calculations, or post-processing shaders. Those responsibilities remain in their existing modules.
 
+## Basic Tests
+
+The test suite covers deterministic, CPU-side logic such as procedural mesh invariants, material registry behavior, post-processing effect settings, scene defaults, and animation state updates. It intentionally avoids GUI automation, OpenGL context creation, shader compilation, screenshots, and visual correctness checks.
+
+Run tests with:
+
+```bash
+uv run pytest
+```
+
 ## Future Extension Strategy
 
 New graphics topics should be added in focused modules without expanding the initial skeleton into a large framework. Geometry should produce GPU-ready mesh data, materials should expose shader-friendly parameters, lighting should provide clear render inputs, animation should update scene parameters over time, and post-processing should operate through framebuffer passes.
