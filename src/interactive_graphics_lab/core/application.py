@@ -21,4 +21,6 @@ class InteractiveGraphicsLabApp(WindowConfig):
 
     def on_render(self, time: float, frame_time: float) -> None:
         """Draw one frame."""
-        self.renderer.render()
+        width, height = self.wnd.size
+        aspect_ratio = width / height if height else self.aspect_ratio
+        self.renderer.render(aspect_ratio)

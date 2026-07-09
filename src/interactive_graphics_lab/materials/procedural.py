@@ -106,12 +106,12 @@ def default_materials() -> dict[MaterialType, ProceduralMaterial]:
         MaterialType.MARBLE: ProceduralMaterial(
             material_type=MaterialType.MARBLE,
             name="Marble",
-            base_color=(0.88, 0.90, 0.86),
-            secondary_color=(0.20, 0.25, 0.32),
-            scale=5.5,
-            frequency=7.0,
-            contrast=1.1,
-            noise_strength=0.7,
+            base_color=(0.92, 0.90, 0.84),
+            secondary_color=(0.10, 0.12, 0.15),
+            scale=3.4,
+            frequency=8.5,
+            contrast=1.35,
+            noise_strength=1.2,
         ),
         MaterialType.WOOD: ProceduralMaterial(
             material_type=MaterialType.WOOD,
@@ -234,9 +234,15 @@ void main() {
     } else if (u_material_type == 3) {
         color = mix(u_base_color, u_secondary_color, clamp(uv.y, 0.0, 1.0));
     } else if (u_material_type == 4) {
-        float veins = sin((p.y + n * u_noise_strength) * u_frequency);
-        float t = smoothstep(0.18, 0.92, veins * 0.5 + 0.5);
-        color = mix(u_secondary_color, u_base_color, t);
+        vec3 marble_p = p * u_scale;
+        float turbulence = fbm(marble_p * 1.35) + 0.5 * fbm(marble_p * 3.1 + vec3(4.7, 1.3, 2.9));
+        float flow = dot(marble_p, normalize(vec3(1.25, 2.0, 0.65)));
+        float wave = sin(flow * u_frequency + turbulence * u_noise_strength * 7.5);
+        float broad_variation = smoothstep(-0.75, 0.95, wave);
+        float fine_vein = 1.0 - smoothstep(0.045, 0.18, abs(wave));
+        vec3 stone = mix(u_base_color * 0.72, u_base_color, broad_variation);
+        vec3 vein_color = mix(u_secondary_color, vec3(0.42, 0.44, 0.48), turbulence * 0.45);
+        color = mix(stone, vein_color, clamp(fine_vein * 0.95, 0.0, 1.0));
     } else if (u_material_type == 5) {
         float rings = length(p.xz) * u_frequency + n * u_noise_strength * 3.0;
         float grain = sin(rings) * 0.5 + 0.5;
