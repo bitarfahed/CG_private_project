@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from array import array
+from math import cos, radians, sin, tan
 from typing import Any
 
 import moderngl
@@ -33,9 +35,17 @@ class Renderer:
     def render(self, aspect_ratio: float) -> None:
         """Render the current procedural mesh."""
         self.clear()
-        self._program["u_aspect_ratio"].value = aspect_ratio
+        model = _rotation_y(radians(-24.0))
+        view = _translation(0.0, 0.0, -3.0)
+        projection = _perspective(radians(42.0), aspect_ratio, 0.1, 100.0)
+        self._write_matrix("u_model", model)
+        self._write_matrix("u_mvp", _multiply_matrix(projection, _multiply_matrix(view, model)))
         self._material.apply(self._program)
         self._mesh.render()
+
+    def _write_matrix(self, uniform_name: str, matrix: tuple[float, ...]) -> None:
+        """Upload a 4x4 row-major matrix to GLSL as column-major bytes."""
+        self._program[uniform_name].write(_matrix_bytes(matrix))
 
 
 _VERTEX_SHADER = """
@@ -45,29 +55,70 @@ in vec3 in_position;
 in vec3 in_normal;
 in vec2 in_uv;
 
-uniform float u_aspect_ratio;
+uniform mat4 u_model;
+uniform mat4 u_mvp;
 
 out vec3 v_normal;
 out vec3 v_position;
 out vec2 v_uv;
 
 void main() {
-    float angle = radians(-22.0);
-    mat3 rotation = mat3(
-        cos(angle), 0.0, -sin(angle),
-        0.0, 1.0, 0.0,
-        sin(angle), 0.0, cos(angle)
-    );
-    vec3 p = rotation * in_position;
-    float preview_scale = 0.82;
-    gl_Position = vec4(
-        p.x * preview_scale / u_aspect_ratio,
-        p.y * preview_scale,
-        p.z * 0.25,
-        1.0
-    );
-    v_position = in_position;
-    v_normal = normalize(in_normal);
+    vec4 world_position = u_model * vec4(in_position, 1.0);
+    gl_Position = u_mvp * vec4(in_position, 1.0);
+    v_position = world_position.xyz;
+    v_normal = normalize(mat3(u_model) * in_normal);
     v_uv = in_uv;
 }
 """
+
+
+def _identity() -> tuple[float, ...]:
+    return (
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    )
+
+
+def _translation(x: float, y: float, z: float) -> tuple[float, ...]:
+    matrix = list(_identity())
+    matrix[3] = x
+    matrix[7] = y
+    matrix[11] = z
+    return tuple(matrix)
+
+
+def _rotation_y(angle: float) -> tuple[float, ...]:
+    c = cos(angle)
+    s = sin(angle)
+    return (
+        c, 0.0, s, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        -s, 0.0, c, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    )
+
+
+def _perspective(fov_y: float, aspect_ratio: float, near: float, far: float) -> tuple[float, ...]:
+    f = 1.0 / tan(fov_y / 2.0)
+    depth = near - far
+    return (
+        f / aspect_ratio, 0.0, 0.0, 0.0,
+        0.0, f, 0.0, 0.0,
+        0.0, 0.0, (far + near) / depth, (2.0 * far * near) / depth,
+        0.0, 0.0, -1.0, 0.0,
+    )
+
+
+def _multiply_matrix(left: tuple[float, ...], right: tuple[float, ...]) -> tuple[float, ...]:
+    result = [0.0] * 16
+    for row in range(4):
+        for column in range(4):
+            result[row * 4 + column] = sum(left[row * 4 + k] * right[k * 4 + column] for k in range(4))
+    return tuple(result)
+
+
+def _matrix_bytes(row_major_matrix: tuple[float, ...]) -> bytes:
+    column_major = [row_major_matrix[row * 4 + column] for column in range(4) for row in range(4)]
+    return array("f", column_major).tobytes()
